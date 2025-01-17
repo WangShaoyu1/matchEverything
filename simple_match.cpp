@@ -18,7 +18,7 @@ using namespace std;
 //定义肯定词和否定词
 vector<wstring> affirmative_keywords = {
     L"是的", L"行", L"好的", L"好", L"可以", L"确认", L"对", L"没问题", L"没错", L"当然", L"需要", L"要", L"要的",
-    L"没事", L"好吧", L"没关系", L"对的", L"是", L"我同意", L"行的", L"好呀", L"没问题的", L"当然可以",
+    L"没事", L"好吧", L"没关系", L"对的", L"是", L"正是",L"我同意", L"行的", L"好呀", L"没问题的", L"当然可以",
     L"可以的", L"必定", L"同意", L"认同", L"完全同意", L"是这样", L"绝对", L"完全是", L"很棒", L"有的",
     L"可以吧", L"非常好", L"一切OK", L"确实", L"非常愿意", L"马上", L"立刻", L"行得通", L"我愿意", L"没错呀",
     L"确定", L"好的吧", L"完全同意", L"一切顺利", L"非常棒", L"一切都好", L"我答应", L"我同意的", L"肯定的",
@@ -29,12 +29,12 @@ vector<wstring> affirmative_keywords = {
     L"同样同意", L"就这么办", L"走吧", L"可以去做", L"完全同意", L"就这样决定", L"放心，行", L"正好",
     L"我很高兴", L"做吧", L"确认无误", L"我愿意做", L"非常好", L"顺利完成", L"是这样", L"确凿无疑", L"是的，确认",
     L"没问题啦", L"我全力支持", L"ok", L"yes", L"I agree", L"sure", L"alright", L"fine", L"perfect", L"correct",
-    L"开始", L"启动", L"搞起来", L"运行"
+    L"开始", L"启动", L"搞起来", L"运行", L"成", L"赞成"
 };
 vector<wstring> negative_keywords = {
     L"不", L"不能", L"不是", L"没", L"没有", L"不行", L"不做", L"不要", L"不能够", L"不想", L"不答应", L"取消", L"算逑", L"等等",
-    L"等会", L"不可能", L"绝对不", L"不是的", L"不支持", L"拒绝", L"不允许", L"不可", L"无意", L"算了", L"不同意", L"不接受", L"别",
-    L"不接受", L"不想做", L"不愿意", L"不赞同", L"不希望", L"不会的", L"不再", L"不管", L"不承认", L"不需要", L"不赞成", L"不想要",
+    L"重新",L"等会", L"不可能", L"绝对不", L"不是的", L"不支持", L"拒绝", L"不允许", L"不可", L"无意", L"算了", L"不同意", L"不接受", L"别",
+    L"不接受", L"不想做", L"不愿意", L"不赞同", L"不希望", L"不会的", L"不再", L"不管", L"不承认", L"不需要", L"不赞成", L"不想要", L"错", L"错误", L"错了"
     L"拒绝接受", L"没准备好", L"no", L"not", L"never", L"no way", L"I don't think so",
     L"I disagree", L"not at all", L"nope", L"can't", L"don't want", L"not possible", L"no thanks"
 };
@@ -44,6 +44,10 @@ std::vector<std::wstring> negative_patterns = {
     LR"((不|不做|不允许|不再|不去|不可以|不希望|不想|不想做|不想要|不愿|不愿意|不接受|不是|不用|不能|不能够|不行|不要|不许|不需要|停|别|别做|拒绝|无|没有|没有|不再|没法|等会).*?(启动|继续|开始|运行|执行|进行|做|去|要|想))"
 };
 
+//避免出现没问题、不错这种肯定词，但是实际上输出是否定的
+std::vector<std::wstring> affirmative_patterns = {
+    LR"((没|没有|不|不用|无|无需).*?(误|问题|错|反对|异议|疑问|质疑|话说))"
+};
 
 // 语气词和副词
 std::vector<std::wstring> filler_words = {
@@ -57,7 +61,7 @@ vector<wstring> question_words = {
     L"哪儿", L"多大", L"什么时候", L"怎么样", L"能不能", L"几时", L"哪些", L"几何", L"要不要", L"多少", L"多么",
     L"为啥", L"如何是", L"会不会", L"是不是", L"该怎么", L"能够", L"应该", L"有没有办法", L"哪种", L"如何做",
     L"是不是", L"为什么会", L"这是什么", L"这些", L"如何理解", L"怎么做", L"为什么会这样", L"做什么", L"该如何",
-    L"如何改善", L"如何解决", L"哪里可以", L"怎样才能", L"有多远", L"有多少", L"怎样才", L"怎么用", L"怎么解决", L"吗", L"么", L"呢"
+    L"如何改善", L"如何解决", L"哪里可以", L"怎样才能", L"有多远", L"有多少", L"怎样才", L"怎么用", L"怎么解决", L"吗", L"么", L"呢",L"多久"
 };
 
 // 对否定词与肯定词按照词汇长度排序（从长到短）
@@ -138,7 +142,17 @@ wstring simple_match(wstring text) {
         }
     }
 
-    // 第四步：匹配否定词
+    // 第四步：使用肯定表达式匹配
+    for (const auto& pattern : affirmative_patterns) {
+        std::wregex re(pattern);
+        std::wsmatch match;
+        if (std::regex_search(cleaned_text, match, re)) {
+            affirmative_matches.emplace_back(match.str(), match.position());
+            cleaned_text.replace(match.position(), match.length(), std::wstring(match.length(), L'*'));
+        }
+    }
+
+    // 第五步：匹配否定词
     for (const auto& word : negative_keywords) {
         size_t pos = cleaned_text.find(word);
         if (pos != wstring::npos) {
@@ -147,7 +161,7 @@ wstring simple_match(wstring text) {
         }
     }
 
-    // 第五步：匹配肯定词
+    // 第六步：匹配肯定词
     for (const auto& word : affirmative_keywords) {
         size_t pos = cleaned_text.find(word);
         if (pos != wstring::npos) {

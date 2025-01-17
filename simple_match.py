@@ -4,7 +4,7 @@ import time
 # 1. 定义肯定和否定的关键词库
 affirmative_keywords = [
     "是的", "行", "好的", "好", "可以", "确认", "对", "没问题", "没错", "当然", "需要", "要", "要的",
-    "没事", "好吧", "没关系", "对的", "是", "我同意", "行的", "好呀", "没问题的", "当然可以",
+    "没事", "好吧", "没关系", "对的", "是", "正是", "我同意", "行的", "好呀", "没问题的", "当然可以",
     "可以的", "必定", "同意", "认同", "完全同意", "是这样", "绝对", "完全是", "很棒", "有的",
     "可以吧", "非常好", "一切OK", "确实", "非常愿意", "马上", "立刻", "行得通", "我愿意", "没错呀",
     "确定", "好的吧", "完全同意", "一切顺利", "非常棒", "一切都好", "我答应", "我同意的", "肯定的",
@@ -15,14 +15,14 @@ affirmative_keywords = [
     "同样同意", "就这么办", "走吧", "可以去做", "完全同意", "就这样决定", "放心，行", "正好",
     "我很高兴", "做吧", "确认无误", "我愿意做", "非常好", "顺利完成", "是这样", "确凿无疑", "是的，确认",
     "没问题啦", "我全力支持", "ok", "yes", "I agree", "sure", "alright", "fine", "perfect", "correct",
-    "开始", "启动", "搞起来", "运行"
+    "开始", "启动", "搞起来", "运行", "成", "赞成"
 ]
 
 negative_keywords = [
     "不", "不能", "不是", "没", "没有", "不行", "不做", "不要", "不能够", "不想", "不答应", "取消", "算逑", "等等",
-    "等会", "不可能", "绝对不", "不是的", "不支持", "拒绝", "不允许", "不可", "无意", "算了", "不同意", "不接受", "别",
-    "不接受", "不想做", "不愿意", "不赞同", "不希望", "不会的", "不再", "不管", "不承认", "不需要", "不赞成", "不想要",
-    "拒绝接受", "没准备好", "no", "not", "never", "no way", "I don't think so",
+    "重新", "等会", "不可能", "绝对不", "不是的", "不支持", "拒绝", "不允许", "不可", "无意", "算了", "不同意",
+    "不接受", "别", "不接受", "不想做", "不愿意", "不赞同", "不希望", "不会的", "不再", "不管", "不承认", "不需要",
+    "不赞成", "不想要", "错", "错误", "错了","拒绝接受", "没准备好", "no", "not", "never", "no way", "I don't think so",
     "I disagree", "not at all", "nope", "can't", "don't want", "not possible", "no thanks"
 ]
 
@@ -30,6 +30,11 @@ negative_keywords = [
 negative_patterns = [
     r"(不|不做|不允许|不再|不去|不可以|不希望|不想|不想做|不想要|不愿|不愿意|不接受|不是|不用|不能|不能够|不行|不要|不许|不需要|停|别|别做|拒绝|无|没有|没有|不再|没法|等会).*?("
     r"启动|继续|开始|运行|执行|进行|做|去|要|想)"]
+
+# 避免出现没问题、不错这种肯定词，但是实际上输出是否定的
+affirmative_patterns = [
+    r"(没|没有|不|不用|无|无需).*?(误|问题|错|反对|异议|疑问|质疑|话说)"
+]
 
 # 定义常见的语气词和副词
 filler_words = ["了", "阿", "呀", "吧", "的", "嘛", "啊", "呢", "就", "可", "总之", "即使", "非常", "有点", "其实",
@@ -41,7 +46,8 @@ question_words = [
     "哪儿", "多大", "什么时候", "怎么样", "能不能", "几时", "哪些", "几何", "要不要", "多少", "多么",
     "为啥", "如何是", "会不会", "是不是", "该怎么", "能够", "应该", "有没有办法", "哪种", "如何做",
     "是不是", "为什么会", "这是什么", "这些", "如何理解", "怎么做", "为什么会这样", "做什么", "该如何",
-    "如何改善", "如何解决", "哪里可以", "怎样才能", "有多远", "有多少", "怎样才", "怎么用", "怎么解决", "吗", "么", "呢"
+    "如何改善", "如何解决", "哪里可以", "怎样才能", "有多远", "有多少", "怎样才", "怎么用", "怎么解决", "吗", "么",
+    "呢", "多久"
 ]
 
 # 对肯定词和否定词按照词汇长度排序（从长到短）
@@ -70,6 +76,14 @@ def simple_match(text):
             negative_matches.append((match.group(), match.start()))
             cleaned_text = re.sub(pattern, len(match.group()) * "*", cleaned_text)
             print(f"匹配到否定表达式: {match.group()}----{text}----{cleaned_text}")
+
+    # 使用肯定表达式匹配
+    for pattern in affirmative_patterns:
+        match = re.search(pattern, cleaned_text)
+        if match:
+            affirmative_matches.append((match.group(), match.start()))
+            cleaned_text = re.sub(pattern, len(match.group()) * "*", cleaned_text)
+            print(f"匹配到肯定表达式: {match.group()}----{text}----{cleaned_text}")
 
     # 匹配否定词
     for word in negative_keywords:
@@ -146,8 +160,8 @@ def test_case_from_file(input_file_path, output_file_path):
 # 主程序
 if __name__ == "__main__":
     start_time = time.time()
-    # input_file_path = f"./tmp.txt"  # 用户输入文件路径
-    input_file_path = f"./test_sentences.txt"  # 用户输入文件路径
+    # input_file_path = f"./test_sentences.txt"  # 用户输入文件路径
+    input_file_path = f"./test_sentences_new.txt"  # 用户输入文件路径
     print(f"读取input_file耗时: {time.time() - start_time:.4f} 秒")
     output_file_path = f"./test_results_py.txt"  # 用户输入输出文件路径
     test_case_from_file(input_file_path, output_file_path)  # 从文件读取并测试
