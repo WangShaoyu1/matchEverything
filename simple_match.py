@@ -22,7 +22,8 @@ negative_keywords = [
     "不", "不能", "不是", "没", "没有", "不行", "不做", "不要", "不能够", "不想", "不答应", "取消", "算逑", "等等",
     "重新", "等会", "不可能", "绝对不", "不是的", "不支持", "拒绝", "不允许", "不可", "无意", "算了", "不同意",
     "不接受", "别", "不接受", "不想做", "不愿意", "不赞同", "不希望", "不会的", "不再", "不管", "不承认", "不需要",
-    "不赞成", "不想要", "错", "错误", "错了","拒绝接受", "没准备好", "no", "not", "never", "no way", "I don't think so",
+    "不赞成", "不想要", "错", "错误", "错了", "拒绝接受", "没准备好", "no", "not", "never", "no way",
+    "I don't think so",
     "I disagree", "not at all", "nope", "can't", "don't want", "not possible", "no thanks"
 ]
 
@@ -50,6 +51,18 @@ question_words = [
     "呢", "多久"
 ]
 
+# 常见的时间相关的词汇
+time_related_words = [
+    "今天", "明天", "昨天", "后天", "大前天", "大后天", "上周", "下周", "本周",
+    "这个月", "上个月", "下个月", "本月", "今年", "去年", "明年", "来年",
+    "早晨", "清晨", "中午", "下午", "晚上", "夜晚", "黄昏", "黎明", "凌晨",
+    "刚才", "刚刚", "一会儿", "未来", "将来",
+    "以前", "从前", "当时", "那时候", "过几天", "前几天", "近几天", "这几天",
+    "这些日子", "那几天", "那年",
+    "今天上午", "今天下午", "今天晚上", "明天上午", "明天下午", "明天晚上",
+    "后天下午", "后天早晨", "第一天", "第二天", "第三天"
+]
+
 # 对肯定词和否定词按照词汇长度排序（从长到短）
 affirmative_keywords = sorted(affirmative_keywords, key=lambda x: len(x), reverse=True)
 negative_keywords = sorted(negative_keywords, key=lambda x: len(x), reverse=True)
@@ -63,6 +76,10 @@ def simple_match(text):
 
     # 如果是疑问句
     if any(question_word in cleaned_text for question_word in question_words):
+        return "未确定"
+
+    # 如果是时间相关的词
+    if any(time_word in cleaned_text for time_word in time_related_words):
         return "未确定"
 
     # 保存匹配到的肯定词和否定词
@@ -152,6 +169,7 @@ def test_case_from_file(input_file_path, output_file_path):
                         result = classify_input(test_input)
                         # 将结果写入输出文件
                         output_file.write(f"输入: {test_input} -> 结果: {result}\n")
+                        # output_file.write(f"{result}\n")
                         print(f"输入: {test_input} -> 结果: {result}")
     except Exception as e:
         print(f"读取文件失败: {e}")
@@ -162,6 +180,7 @@ if __name__ == "__main__":
     start_time = time.time()
     # input_file_path = f"./test_sentences.txt"  # 用户输入文件路径
     input_file_path = f"./test_sentences_new.txt"  # 用户输入文件路径
+    # input_file_path = f"./temp.txt"  # 用户输入文件路径
     print(f"读取input_file耗时: {time.time() - start_time:.4f} 秒")
     output_file_path = f"./test_results_py.txt"  # 用户输入输出文件路径
     test_case_from_file(input_file_path, output_file_path)  # 从文件读取并测试

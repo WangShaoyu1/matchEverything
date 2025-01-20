@@ -52,7 +52,7 @@ std::vector<std::wstring> affirmative_patterns = {
 // 语气词和副词
 std::vector<std::wstring> filler_words = {
     L"了", L"阿", L"呀", L"吧", L"的", L"嘛", L"啊", L"呢", L"就", L"可", L"总之", L"即使", L"非常", L"有点", L"其实",
-	L"稍微", L"不太", L"怎么", L"因此", L"就", L"才", L"更", L"也",L"还", L"都", L"才", L"就",L"再",L"在",L"只", L"只是",L"只有"
+    L"稍微", L"不太", L"怎么", L"因此", L"就", L"才", L"更", L"也",L"还", L"都", L"才", L"就",L"再",L"在",L"只", L"只是",L"只有"
 };
 
 // 常见的问句词汇
@@ -62,6 +62,14 @@ vector<wstring> question_words = {
     L"为啥", L"如何是", L"会不会", L"是不是", L"该怎么", L"能够", L"应该", L"有没有办法", L"哪种", L"如何做",
     L"是不是", L"为什么会", L"这是什么", L"这些", L"如何理解", L"怎么做", L"为什么会这样", L"做什么", L"该如何",
     L"如何改善", L"如何解决", L"哪里可以", L"怎样才能", L"有多远", L"有多少", L"怎样才", L"怎么用", L"怎么解决", L"吗", L"么", L"呢",L"多久"
+};
+
+// 常见的时间相关的词汇
+vector<wstring> time_related_words = {
+    L"今天", L"明天", L"昨天", L"后天", L"大前天", L"大后天", L"上周", L"下周", L"本周", L"这个月",L"上个月",L"下个月",L"本月",L"今年",L"去年",L"明年",L"来年",
+    L"早晨",L"清晨",L"中午",L"下午",L"晚上",L"夜晚",L"黄昏",L"黎明",L"凌晨",L"刚才",L"刚刚",L"一会儿",L"未来",L"将来",L"以前",L"从前",L"当时",
+    L"那时候",L"过几天",L"前几天",L"近几天",L"这几天",L"这些日子",L"那几天",L"那年",L"今天上午",L"今天下午",L"今天晚上",L"明天上午",L"明天下午",
+    L"明天晚上",L"后天下午",L"后天早晨",L"第一天",L"第二天",L"第三天"
 };
 
 // 对否定词与肯定词按照词汇长度排序（从长到短）
@@ -128,6 +136,12 @@ wstring simple_match(wstring text) {
         }
     }
 
+    for (wstring time_word : time_related_words) {
+        if (cleaned_text.find(time_word) != wstring::npos) {
+            return L"未确定";
+        }
+    }
+
     // 保存匹配到的肯定词和否定词
     vector<pair<wstring, size_t>> affirmative_matches;
     vector<pair<wstring, size_t>> negative_matches;
@@ -170,26 +184,26 @@ wstring simple_match(wstring text) {
         }
     }
     std::wcout << "Last Cleaned text: " << cleaned_text << std::endl;
-//    printMatches(affirmative_matches, L"affirmative_matches");
-//    printMatches(negative_matches, L"negative_matches");
+    //    printMatches(affirmative_matches, L"affirmative_matches");
+    //    printMatches(negative_matches, L"negative_matches");
 
-    // 第六步：根据匹配结果，做最终判断
+        // 第六步：根据匹配结果，做最终判断
     if (!affirmative_matches.empty() && !negative_matches.empty()) {
         // 第6.1步：获取肯定和否定词在句子中的位置，最大位置如果肯定在后，则整个句子表达为肯定；反之亦然；初始化最大位置
         int affirmative_position = 0, negative_position = 0;
-		wstring affirmative_max_match, negative_max_match;
+        wstring affirmative_max_match, negative_max_match;
 
-		// 遍历肯定词和否定词，找到最大位置
+        // 遍历肯定词和否定词，找到最大位置
         for (const auto& match : affirmative_matches) {
             if (match.second >= affirmative_position) {
                 affirmative_position = match.second;
-				affirmative_max_match = match.first;
+                affirmative_max_match = match.first;
             }
         }
         for (const auto& match : negative_matches) {
             if (match.second >= negative_position) {
                 negative_position = match.second;
-				negative_max_match = match.first;
+                negative_max_match = match.first;
             }
         }
 
@@ -257,7 +271,8 @@ void processFile(const std::string& input_file, const std::string& output_file) 
         std::wstring result = simple_match(line);
 
         // 写入输出文件
-        outfile << L"输入: " << line << L" -> 结果: " << result << std::endl;
+        //outfile << L"输入: " << line << L" -> 结果: " << result << std::endl;
+        outfile << result << std::endl;
     }
 
     // 关闭文件
